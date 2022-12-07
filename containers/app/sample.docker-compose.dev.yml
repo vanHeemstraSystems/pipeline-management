@@ -1,0 +1,178 @@
+version: "3.7"
+
+secrets:
+  database_password:
+    file: ./secrets/.database_password
+  proxy_password:
+    file: ./secrets/.proxy_password    
+
+# See https://stackoverflow.com/questions/29261811/use-docker-compose-env-variable-in-dockerbuild-file
+services:
+
+  main:
+    secrets:
+      - proxy_password
+    build:
+      context: ./main
+      dockerfile: Dockerfile.dev
+      args: # from env_file
+        UNIQUE_NAMESPACE: ${UNIQUE_NAMESPACE}
+        IMAGE_REPOSITORY: ${IMAGE_REPOSITORY}
+        PROXY_USER: ${PROXY_USER}
+        PROXY_PASSWORD: ${PROXY_PASSWORD}
+        PROXY_FQDN: ${PROXY_FQDN}
+        PROXY_PORT: ${PROXY_PORT}
+        NODE_ENV: development
+    env_file:
+      - .env
+    container_name: ${UNIQUE_NAMESPACE}-main-dev
+    security_opt:
+      - no-new-privileges:true
+    privileged: true      
+    ports:
+      - "3010:3010"
+    volumes:
+      - ./main:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPULLING=true
+    #  - PROXY_PASSWORD='/run/secrets/proxy_password'
+#    depends_on:
+#      - "portainer"
+#      - "scope"
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile.dev
+      args: # from env_file
+        UNIQUE_NAMESPACE: ${UNIQUE_NAMESPACE}
+        IMAGE_REPOSITORY: ${IMAGE_REPOSITORY}
+        PROXY_USER: ${PROXY_USER}
+        PROXY_PASSWORD: ${PROXY_PASSWORD}
+        PROXY_FQDN: ${PROXY_FQDN}
+        PROXY_PORT: ${PROXY_PORT}    
+    env_file:
+      - .env
+    container_name: ${UNIQUE_NAMESPACE}-nginx-dev
+    extra_hosts:
+      - "host.docker.internal:host-gateway"    
+    security_opt:
+      - no-new-privileges:true
+    privileged: true  
+    ports:
+      - "7080:8080"
+    depends_on:
+      - "main"
+
+  proxy:
+    build:
+      context: ./proxy
+      dockerfile: Dockerfile.dev
+      args: # from env_file
+        UNIQUE_NAMESPACE: ${UNIQUE_NAMESPACE}
+        IMAGE_REPOSITORY: ${IMAGE_REPOSITORY}
+        PROXY_USER: ${PROXY_USER}
+        PROXY_PASSWORD: ${PROXY_PASSWORD}
+        PROXY_FQDN: ${PROXY_FQDN}
+        PROXY_PORT: ${PROXY_PORT}
+        DISABLE_IPV6: ${DISABLE_IPV6}
+    env_file:
+      - .env     
+    container_name: ${UNIQUE_NAMESPACE}-proxy-dev
+    security_opt:
+      - no-new-privileges:true
+    privileged: true
+    restart: unless-stopped
+    ports:
+      - "8080:80" # Public HTTP Port
+      - "8081:81" # Admin Web Port
+      - "8443:443" # Public HTTPS Port
+    volumes:
+      - ./data:/data
+      - ./letsencrypt:/etc/letsencrypt
+
+networks:
+  proxy:
+    external: true
+
+#  portainer:
+#    secrets:
+#      - proxy_password
+#    build:
+#      context: ./portainer
+#      dockerfile: Dockerfile.dev
+#      args: # from env_file
+#        UNIQUE_NAMESPACE: ${UNIQUE_NAMESPACE}
+#        IMAGE_REPOSITORY: ${IMAGE_REPOSITORY}
+#        PROXY_USER: ${PROXY_USER}
+#        PROXY_PASSWORD: ${PROXY_PASSWORD}
+#        PROXY_FQDN: ${PROXY_FQDN}
+#        PROXY_PORT: ${PROXY_PORT}
+#        NODE_ENV: development
+#    env_file:
+#      - .env
+#    container_name: ${UNIQUE_NAMESPACE}-portainer-dev
+#    restart: unless-stopped
+#    security_opt:
+#      - no-new-privileges:true
+#    privileged: true
+#    networks:
+#      - proxy
+#    ports:
+#      - "9442:9443"
+#      - "8999:9000"
+#      - "7999:8000"   
+#    volumes:
+#      - /etc/localtime:/etc/localtime:ro
+#      - /var/run/docker.sock:/var/run/docker.sock:ro
+#      - ./data:/data
+#    labels:
+#      - "traefik.enable=true"
+#      - "traefik.http.routers.portainer.entrypoints=http"
+#      - "traefik.http.routers.portainer.rule=Host(`portainer.apps-pwc-portainer.asml.com`)"
+#      - "traefik.http.middlewares.portainer-https-redirect.redirectscheme.scheme=https"
+#      - "traefik.http.routers.portainer.middlewares=portainer-https-redirect"
+#      - "traefik.http.routers.portainer-secure.entrypoints=https"
+#      - "traefik.http.routers.portainer-secure.rule=Host(`portainer.apps-pwc-portainer.asml.com`)"
+#      - "traefik.http.routers.portainer-secure.tls=true"
+#      - "traefik.http.routers.portainer-secure.tls.certresolver=http"
+#      - "traefik.http.routers.portainer-secure.service=portainer"
+#      - "traefik.http.services.portainer.loadbalancer.server.port=9000"
+#      - "traefik.docker.network=proxy"
+
+#  scope:
+#    secrets:
+#      - proxy_password
+#    build:
+#      context: ./scope
+#      dockerfile: Dockerfile.dev
+#      args: # from env_file
+#        UNIQUE_NAMESPACE: ${UNIQUE_NAMESPACE}
+#        IMAGE_REPOSITORY: ${IMAGE_REPOSITORY}
+#        PROXY_USER: ${PROXY_USER}
+#        PROXY_PASSWORD: ${PROXY_PASSWORD}
+#        PROXY_FQDN: ${PROXY_FQDN}
+#        PROXY_PORT: ${PROXY_PORT}
+#    env_file:
+#      - .env
+#    container_name: ${UNIQUE_NAMESPACE}-scope-dev
+#    security_opt:
+#      - no-new-privileges:true
+#    privileged: true
+#    # network_mode: "host"
+#    # pid: "host"    
+#    labels:
+#      - "works.weave.role=system"        
+#    restart: unless-stopped
+#    ports:
+#      - "4039:4040"
+#    volumes:
+#      - "/var/run/docker.sock:/var/run/docker.sock:rw"
+#    #  - ./scope:/app
+#    #  - /scope/node_modules
+#    # environment:
+#    #  - PROXY_PASSWORD='/run/secrets/proxy_password'
+#    command:
+#      - "--probe.docker=true"
+#      - "--weave=false"
