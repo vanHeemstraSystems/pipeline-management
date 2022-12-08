@@ -11,6 +11,8 @@ Documentation of this repository is automatically done with Quarto using GitHub 
 
 Based on "n8n" at https://n8n.io/
 
+Based on "n8n Docker Deployment" at https://docs.n8n.io/hosting/installation/docker/
+
 Based on "NGinX Proxy Manager" at https://nginxproxymanager.com/
 
 Based on "Awesome Quarto" at https://github.com/mcanouil/awesome-quarto
