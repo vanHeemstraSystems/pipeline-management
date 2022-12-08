@@ -1,0 +1,29 @@
+# Stage 1: Deps
+
+# Slightly modified version of next.js's with-docker Dockerfile
+# https://github.com/vercel/next.js/blob/canary/examples/with-docker
+# See also https://www.reddit.com/r/nextjs/comments/ungq2f/docker_error_could_not_find_a_production_build_in/
+# See also "Your DOCKER NextJS IMAGE SUCKS! Optimize it! | HOW TO" at https://www.youtube.com/watch?v=dtLpWR98HfE
+
+# Stage 1: Deps
+
+# Slightly modified version of next.js's with-docker Dockerfile
+# https://github.com/vercel/next.js/blob/canary/examples/with-docker
+# See also https://www.reddit.com/r/nextjs/comments/ungq2f/docker_error_could_not_find_a_production_build_in/
+# See also "Your DOCKER NextJS IMAGE SUCKS! Optimize it! | HOW TO" at https://www.youtube.com/watch?v=dtLpWR98HfE
+
+ARG IMAGE_REPOSITORY
+# Install dependencies only when needed
+FROM ${IMAGE_REPOSITORY}/n8nio/n8n:latest AS deps
+
+# See https://stackoverflow.com/questions/29261811/use-docker-compose-env-variable-in-dockerbuild-file
+ARG PROXY_USER
+ARG PROXY_PASSWORD
+ARG PROXY_FQDN
+ARG PROXY_PORT
+
+ENV HTTP_PROXY="http://${PROXY_USER}:${PROXY_PASSWORD}@${PROXY_FQDN}:${PROXY_PORT}"
+ENV HTTPS_PROXY="http://${PROXY_USER}:${PROXY_PASSWORD}@${PROXY_FQDN}:${PROXY_PORT}"
+
+# Expose port
+EXPOSE 5678
