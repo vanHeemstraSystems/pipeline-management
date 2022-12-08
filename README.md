@@ -13,6 +13,8 @@ Based on "n8n" at https://n8n.io/
 
 Based on "n8n Docker Deployment" at https://docs.n8n.io/hosting/installation/docker/
 
+Based on "n8n on Docker Hub" at https://hub.docker.com/r/n8nio/n8n#start-n8n-in-docker
+
 Based on "NGinX Proxy Manager" at https://nginxproxymanager.com/
 
 Based on "Awesome Quarto" at https://github.com/mcanouil/awesome-quarto
